@@ -1,0 +1,13 @@
+<!doctype html>
+<title>Intel Galileo Web Server</title>
+<body>
+ <center>
+	  <a href=/led/1> Turn LED On <a/> | <a href=/led/0> Turn LED Off </a> | 
+	  <a href=/ledStatus> Check LED Status </a> |  <a href=/tmp> Display the Temperature </a> 
+	  <hr> <br>
+{% if bodyText%}
+   {{ bodyText }}
+{% else %}
+  <h1>Default</h1>
+{% endif %}
+</body>
