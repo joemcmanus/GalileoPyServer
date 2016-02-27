@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # File    : server.py ; a Flask app to control an LED `
 # Author  : Joe McManus josephmc@alumni.cmu.edu
-# Version : 0.1  02/25/2016
+# Version : 0.2  02/26/2016
 # Copyright (C) 2016 Joe McManus
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,32 +18,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from flask import Flask
+from flask import Flask, render_template
 import sys 
 import mraa
 import time
 
 app = Flask(__name__)
 
-def printHeader():
-	return '''<html> <head>              
-	 <title> Galileo Using Flask </title>
-	 </head>                                   
-	 <body>
-	 <center>
-	  <a href=/led/1> Turn LED On <a/> | <a href=/led/0> Turn LED Off </a> | 
-	  <a href=/ledStatus> Check LED Status </a> |  <a href=/tmp> Display the Temperature </a> 
-	  <hr> <br>'''
-
-def printFooter(): 
-	return '''</body></html>'''
-
 @app.route('/')
 def index():
-	content=printHeader()
-	content=content +  " Welcome to the Intel Galileo Gen 2 using Flask" 
-	content=content + printFooter()
-	return(content)
+	return render_template('template.html', bodyText="Welcome to the Intel Galileo Gen 2 using Flask")
 
 @app.route('/led/<int:i>')
 def led(i):
@@ -57,23 +41,21 @@ def led(i):
 	else:
 		return(True)
 	   
-	content=printHeader() + "Turning LED " + ledWord
 	pin = mraa.Gpio(12)
 	pin.dir(mraa.DIR_OUT)
 	pin.write(ledAction)
-	content=content+printFooter()
-	return(content)
+	bodyText="Turning LED " + ledWord
+	return render_template('template.html', bodyText=bodyText)
 
 @app.route('/ledStatus')
 def ledStatus():
-	content=printHeader() + "The LED is currently "
 	pin = mraa.Gpio(12)
 	if pin.read() == 0:
 		status="off"
 	else: 
 		status="on"
-	content=content+ status + printFooter()
-	return(content)
+	bodyText="The LED is currently " + status
+	return render_template('template.html', bodyText=bodyText) 
 
 @app.route('/tmp')
 def tmp():
@@ -94,8 +76,8 @@ def tmp():
 	galVoltage=float(rawReading / 819.0)
 	tempC= (galVoltage * 100 ) - 50 
 	tempF= (tempC * 9.0 / 5.0) + 32.0
-	content=printHeader() + "Current Temperature: " + str(round(tempF,2)) + "<br><a href=/tmp> Refresh Temp</a>" + printFooter()    
-	return(content)
+	bodyText="Current Temperature: " + str(round(tempF,2)) 
+	return render_template('template.html', bodyText=bodyText) 
 	
 
 if __name__ == '__main__':
