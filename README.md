@@ -31,3 +31,5 @@ A sample server.crt and server.key is here for download. You should probably cre
 Pic of Web Interface
 ![alt tag](https://raw.githubusercontent.com/joemcmanus/GalileoPyServer/master/pyserver.png)
 
+Sample Wiring 
+![alt_tag](https://raw.githubusercontent.com/joemcmanus/GalileoPyServer/master/GalileoGen2-PyServer_bb.png)
