@@ -135,4 +135,4 @@ if __name__ == '__main__':
 	context=('server.crt', 'server.key')
 	app.secret_key = 'ac5e7221f7d8146678b3f977f4985cf602877d2135affa9cc0eb89f4c01e68261d54df'
 	#app.run(host='0.0.0.0', port=80)
-	app.run(host='10.0.1.10', debug=False, port=443, ssl_context=context)
+	app.run(host='0.0.0.0', debug=False, port=443, ssl_context=context)
