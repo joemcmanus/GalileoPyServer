@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-# File    : server.py ; a Flask app to control an LED `
+# File    : server.py ; a Flask app to control an LED and show off authentication 
 # Author  : Joe McManus josephmc@alumni.cmu.edu
-# Version : 0.2  02/26/2016
+# Version : 0.3  02/29/2016
 # Copyright (C) 2016 Joe McManus
 #
 # This program is free software: you can redistribute it and/or modify
@@ -18,10 +18,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from flask import Flask, render_template
+from flask import Flask, render_template, Markup, request, redirect, session
+from OpenSSL import SSL
 import sys 
 import mraa
 import time
+import sqlite3
+import hashlib
+
+def getHash(passText):
+	hashPass=hashlib.sha512()
+	hashPass.update(passText)
+	return(hashPass.hexdigest())
 
 app = Flask(__name__)
 
@@ -31,6 +39,14 @@ def index():
 
 @app.route('/led/<int:i>')
 def led(i):
+	if session.get('authenticated'):
+		if session['authenticated'] != 'yes':
+			response=redirect('/loginForm', code=302)
+			return response
+	else: 
+		response=redirect('/loginForm', code=302)
+		return response
+		
 	ledPostAction=i
 	if ledPostAction == 0:
 		ledWord="off"
@@ -44,7 +60,7 @@ def led(i):
 	pin = mraa.Gpio(12)
 	pin.dir(mraa.DIR_OUT)
 	pin.write(ledAction)
-	bodyText="Turning LED " + ledWord
+	bodyText=Markup("Turning LED " + ledWord + "<br> <br> <a href=/logout> logout </a> <br>")
 	return render_template('template.html', bodyText=bodyText)
 
 @app.route('/ledStatus')
@@ -79,6 +95,44 @@ def tmp():
 	bodyText="Current Temperature: " + str(round(tempF,2)) 
 	return render_template('template.html', bodyText=bodyText) 
 	
+@app.route('/loginForm')
+def loginForm():
+	bodyText=Markup('''<form method=POST action=/login>
+	Username: <input type=text name=postUser value=\"\"></input><br>
+	Password: <input type=password name=postPass value=\"\"></input><br>
+	<input type=submit name=submit value=\"submit\">
+	</form>
+	''')
+	return render_template('template.html', bodyText=bodyText) 
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+	db = sqlite3.connect('server.sql3')
+	db.row_factory = sqlite3.Row
+	epass=getHash(request.form['postPass'])
+	query="select id, username, password from users where username=? and password=?"
+	t=(request.form['postUser'], epass)
+	cursor=db.cursor()
+	cursor.execute(query, t)
+	rows = cursor.fetchall()
+	if len(rows) == 1:
+		bodyText=request.form['postUser'] + " " + request.form['postPass']
+		bodyText=bodyText + " Success!" 
+		session['authenticated']='yes'
+	else:
+		bodyText = "Incorect Login."
+
+	return render_template('template.html', bodyText=bodyText)
+
+@app.route('/logout')
+def logout():
+	session['authenticated']='no' 
+	response=redirect('/', code=302)                       
+	return response
+	
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', port=80)
+	
+	context=('server.crt', 'server.key')
+	app.secret_key = 'ac5e7221f7d8146678b3f977f4985cf602877d2135affa9cc0eb89f4c01e68261d54df'
+	#app.run(host='0.0.0.0', port=80)
+	app.run(host='10.0.1.10', debug=False, port=443, ssl_context=context)
